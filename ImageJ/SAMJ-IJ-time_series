@@ -1,0 +1,99 @@
+// Load the time series of images for the cell aggregation experiment.
+// Launch this script after preprartion of initial ROI set with "SAMJ-IJ-prepare.ijm" script
+// The script execution might take substantial amount of time depending on number of spheroids and time points
+// The ROIs for each time point will be saved in the folder named after the image title for further analysis.
+main_image_name = getTitle();
+print(main_image_name);
+scaleXY=1.5874; // Set scale as required
+scaleZ=1; // Set scale as required
+run("Properties...", "unit=um pixel_width=" + scaleXY + " pixel_height=" + scaleXY + " voxel_depth=" + scaleZ);
+//run("Set Measurements...", "centroid redirect=None decimal=0");
+run("Set Measurements...", "area centroid perimeter fit shape redirect=None decimal=3");
+
+main_image_nameshort = substring(main_image_name,0,main_image_name.length-4);
+print(main_image_nameshort);
+current_name = main_image_nameshort + "-1.tif";
+
+dir = getDirectory("image");
+dirR = dir + main_image_nameshort + "/";
+numSlices = nSlices;
+if (!File.exists(dirR)) {
+    File.makeDirectory(dirR);
+    print("Folder created: " + dirR);
+}
+
+cur_ROIset = dirR + "RoiSet0.zip"; //change ROI set or not line 99
+
+roiManager("reset");
+maxV = numSlices;
+//maxV = 20;
+for (in = 1; in < maxV+1; in++) {  //start at 1
+run("Clear Results");
+if (isOpen(current_name)) {
+    selectImage(current_name);
+	close;
+}
+if (roiManager("count") > 0) {
+	roiManager("Delete");
+}
+selectImage(main_image_name);
+//run("Next Slice [>]");
+setSlice(in);
+run("Duplicate...", " ");
+selectImage(current_name);
+
+if (roiManager("count") > 0) {
+	roiManager("Delete");
+}
+
+roiManager("Open", cur_ROIset);
+//run("SAMJ Annotator", "model=[SAM2 Tiny] export=false retunLargest=true ");
+run("SAMJ Annotator", "model=[SAM2 Large] export=false retunLargest=true "); // select SAMJ model
+
+roiManager("Measure");
+String.copyResults;
+baseName = "RoiSet";
+baseName2 = "Circs";
+ext = ".zip";
+ext2 = ".csv";
+// Start with no suffix (0) or 1
+suffix = in;
+finalName = baseName + suffix + ext;
+finalName2 = baseName2 + suffix + ext2;
+// Loop to find available filename
+//while (File.exists(dirR + finalName)) {
+//    suffix++;
+//    finalName = baseName + suffix + ext;
+//    finalName2 = baseName2 + suffix + ext2;
+//}
+print(dirR + finalName);
+roiManager("Save", dirR + finalName);
+saveAs("Results", dirR + finalName2);
+
+n = roiManager("count");
+run("Clear Results");
+for (i = 0; i < n; i++) {
+	//print("here");
+    roiManager("Select", i);
+    roiManager("Measure");
+    x0 = getResult("X", i);
+    y0 = getResult("Y", i);
+    //print(i);
+    //print(x0, y0);
+    toUnscaled(x0, y0);
+    //print(x0, y0);
+    makePoint(x0, y0);
+    roiManager("Add");
+}
+// delete previous rois
+for (i = 0; i < n; i++) {
+roiManager("Select", 0);
+roiManager("Delete");
+}
+roiManager("Save", dirR + "ROIsetlast.zip");
+cur_ROIset = dirR + "ROIsetlast.zip"; //update ROI set 
+}
+print("Done");
+roiManager("reset");
+run("Clear Results");
+roiManager("Open", dirR + finalName);
