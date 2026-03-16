@@ -1,0 +1,12 @@
+Prerequisites:
+- install OpenFOAM-12; manual install uses branch `version-12` from repository https://github.com/OpenFOAM/OpenFOAM-dev.git
+- install Paraview-5.9.0;
+-- use https://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v5.9&type=binary&os=Linux&downloadFile=ParaView-5.9.0-osmesa-MPI-Linux-Python3.8-64bit.tar.gz for cluster runs
+
+See file script/config.sh and change directories to location of your installed packages
+See also templates/run.sh before running `prepare_*.sh` if you want to change cluster run parameters
+
+Use scripts from scripts/ folder -- run them from base directory!
+- run `scripts/prepare_*.sh`to setup each of experiment series
+- run `scripts/launch_*.sh` to submit a batch job (sbatch)
+- run `scripts/anim*.sh` to draw the results as images (then use tools such as `ffmpeg` to create videos from images)
